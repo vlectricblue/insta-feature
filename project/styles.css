@@ -1,0 +1,233 @@
+/* ─────────────────────────────────────────────────────────────
+   Threads (Instagram) — Text Post Creator
+   Base shell + phone frame + Instagram chrome
+   Template-specific CSS lives at bottom.
+   ───────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Hide all scrollbars across the prototype but keep scroll behavior — matches
+   how native iOS/Android apps render scroll regions with no visible chrome. */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", Segoe UI, Roboto, sans-serif;
+  background: #0a0a0c;
+  color: #fff;
+  overflow: hidden;
+}
+
+#desk {
+  width: 100vw; height: 100vh;
+  display: grid; place-items: center;
+  /* desktop dim chrome */
+  background:
+    radial-gradient(1200px 800px at 30% 20%, #1a1a22 0%, transparent 60%),
+    radial-gradient(900px 700px at 80% 80%, #161620 0%, transparent 60%),
+    #08080b;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── PHONE FRAME ───────────────────────────────────────────── */
+.phone {
+  width: 375px;
+  height: 812px;
+  display: grid;
+  place-items: center;
+  /* scale to fit viewport while keeping crispness */
+  --phone-scale: min(1, calc((100vh - 60px) / 832), calc((100vw - 40px) / 395));
+  transform: scale(var(--phone-scale));
+  transform-origin: center center;
+  flex-shrink: 0;
+}
+.phone-bezel {
+  width: 100%;
+  height: 100%;
+  border-radius: 54px;
+  padding: 8px;
+  background:
+    linear-gradient(165deg, #1f1f24, #0e0e10 60%, #1a1a1f);
+  box-shadow:
+    0 0 0 1.5px #2c2c34 inset,
+    0 25px 60px -10px rgba(0,0,0,.7),
+    0 0 0 1px #000;
+  position: relative;
+}
+.phone-bezel::before {
+  /* outer thin polished ring */
+  content: ""; position: absolute; inset: -2px;
+  border-radius: 56px; pointer-events: none;
+  background: linear-gradient(180deg, #3a3a44, #111 40%, #2a2a30);
+  z-index: -1;
+}
+.phone-screen {
+  width: 100%; height: 100%;
+  border-radius: 46px;
+  background: #000;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  color: #fff;
+}
+
+/* Status bar */
+.status-bar {
+  height: 47px;
+  padding: 18px 28px 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  font-family: -apple-system, "SF Pro Text", system-ui;
+  font-size: 17px; font-weight: 600;
+  letter-spacing: 0.2px;
+  position: relative;
+  z-index: 50;
+  color: var(--sb-color, #fff);
+  pointer-events: none;
+}
+.sb-time { padding-top: 1px; }
+.sb-notch {
+  position: absolute; left: 50%; top: 11px; transform: translateX(-50%);
+  width: 124px; height: 35px; border-radius: 20px; background: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+.sb-notch .sb-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #2ecc71;
+  margin-right: -42px; opacity: .9;
+}
+.sb-right { display: inline-flex; gap: 5px; align-items: center; }
+.sb-batt {
+  width: 26px; height: 13px; border-radius: 3px;
+  background: #2ecc71; position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 8px; color: #003;
+  margin-left: 1px;
+}
+.sb-batt::after {
+  content: ""; position: absolute; right: -3px; top: 4px;
+  width: 2px; height: 5px; background: #2ecc71; border-radius: 0 1px 1px 0;
+}
+.sb-batt-fill { display: none; }
+.sb-batt-bolt { font-size: 9px; color: #fff; font-weight: 800; line-height: 1; margin-left: -1px; }
+/* light status bar variant */
+.status-bar.light { color: #000; }
+.status-bar.light .sb-notch { background: #000; }
+
+/* Home indicator */
+.home-indicator {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  width: 134px; height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,.95);
+  z-index: 60;
+  pointer-events: none;
+}
+.home-indicator.dark { background: #000; }
+
+/* ── APP MOUNT ─────────────────────────────────────────────── */
+#app {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+}
+
+/* generic */
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.btn-icon { width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: 50%; }
+.btn-icon:active { background: rgba(255,255,255,.08); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── CAMERA / LANDING (Threads selected) ───────────────────── */
+.camera {
+  flex: 1; display: flex; flex-direction: column;
+  background: #000;
+  position: relative;
+  padding-top: 47px;
+}
+.camera-top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px;
+}
+.camera-top svg { width: 24px; height: 24px; }
+.camera-canvas {
+  flex: 1;
+  display: grid; place-items: center;
+  position: relative;
+  padding: 0 20px;
+}
+.threads-cta {
+  text-align: center; color: #fff;
+  display: flex; flex-direction: column; gap: 12px;
+  align-items: center;
+  animation: floatUp .6s ease both;
+}
+.threads-cta .glyph {
+  width: 92px; height: 92px; display: grid; place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.18), rgba(255,255,255,.02) 70%);
+  border: 1.5px solid rgba(255,255,255,.18);
+  margin-bottom: 4px;
+}
+.threads-cta .glyph svg { width: 56px; height: 56px; color: #fff; }
+.threads-cta h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.2px; }
+.threads-cta p { margin: 0; color: rgba(255,255,255,.66); font-size: 14px; max-width: 240px; line-height: 1.4; }
+.threads-cta .start {
+  margin-top: 10px;
+  background: #fff; color: #000;
+  font-weight: 700; font-size: 15px;
+  padding: 12px 26px; border-radius: 999px;
+  letter-spacing: -0.1px;
+}
+.threads-cta .start:active { transform: scale(.97); }
+
+.camera-leftrail {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 22px; align-items: center;
+  color: #fff;
+}
+.camera-leftrail svg { width: 24px; height: 24px; }
+
+/* mode switcher (POST · STORY · REEL · THREADS) */
+.mode-switch {
+  display: flex; justify-content: center; align-items: center;
+  gap: 26px;
+  padding: 0 16px 28px;
+  font-size: 13px; font-weight: 700; letter-spacing: 1.4px;
+  color: rgba(255,255,255,.5);
+  user-select: none;
+}
+.mode-switch button { padding: 8px 2px; position: relative; transition: color .15s; }
+.mode-switch button.active { color: #fff; }
+.mode-switch button.active::after {
+  content: ""; position: absolute; left: 50%; bottom: 0;
+  width: 4px; height: 4px; border-radius: 50%; background: #fff;
+  transform: translateX(-50%);
+}
+.camera-bottom { padding-bottom: 12px; }
+.shutter-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 30px; padding: 0 24px 14px;
+}
+.gallery-pill {
+  width: 40px; height: 40px; border-radius: 10px; overflow: hidden;
+  background: #222;
+}
+.gallery-pill img { width: 100%; height: 100%; object-fit: cover; }
+.shutter {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 5px solid #fff;
+  background: rgba(255,255,255,.06);
+}
+.flip { width: 38px; height: 38px; border-radius: 50%; background: #2c2c2e;
+  display: grid; place-items: center; color: #fff;
+}
+.story-thumb {
+  width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  background: #222; border: 1px solid rgba(255,255,255,.2);
+}
+.story-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

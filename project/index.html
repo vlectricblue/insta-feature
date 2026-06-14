@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Instagram — Post Design Studio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,500&family=DM+Serif+Display:ital@0;1&family=Lora:ital,wght@0,400;0,500;0,700;1,400&family=Anton&family=Bebas+Neue&family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles-app.css" />
+  <link rel="stylesheet" href="styles-v2.css" />
+  <link rel="stylesheet" href="styles-thread.css" />
+</head>
+<body>
+  <div id="desk">
+    <div id="phone" class="phone">
+      <div class="phone-bezel">
+        <div class="phone-screen" id="screen">
+          <!-- status bar -->
+          <div class="status-bar">
+            <span class="sb-time">11:48</span>
+            <span class="sb-notch"><span class="sb-dot"></span></span>
+            <span class="sb-right">
+              <svg viewBox="0 0 18 12" width="17" height="11" aria-hidden="true"><g fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="4" y="6" width="3" height="6" rx="0.5"/><rect x="8" y="3" width="3" height="9" rx="0.5"/><rect x="12" y="0" width="3" height="12" rx="0.5" opacity=".35"/></g></svg>
+              <svg viewBox="0 0 16 12" width="16" height="11" aria-hidden="true"><path fill="currentColor" d="M8 11.2a1.6 1.6 0 110-3.2 1.6 1.6 0 010 3.2zM3.4 6.6a6.5 6.5 0 019.2 0l-1.1 1.1a4.95 4.95 0 00-7 0L3.4 6.6zM.6 3.8a10.45 10.45 0 0114.8 0l-1.1 1.1a8.9 8.9 0 00-12.6 0L.6 3.8z"/></svg>
+              <span class="sb-batt"><span class="sb-batt-fill"></span><span class="sb-batt-bolt">⚡</span></span>
+            </span>
+          </div>
+          <!-- app mounts here -->
+          <div id="app"></div>
+          <!-- home indicator -->
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+    </div>
+    <!-- tweaks button + panel mount -->
+    <div id="tweaks-root"></div>
+  </div>
+
+  <script src="templates.js"></script>
+  <script src="app.js"></script>
+
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bgthumb" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f6d4bd"/>
+          <stop offset="1" stop-color="#d77a72"/>
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="22" fill="url(#bgthumb)"/>
+      <rect x="34" y="34" width="32" height="32" rx="7" fill="none" stroke="#3a2218" stroke-width="3.5"/>
+      <path d="M50 34v32M34 50h32" stroke="#3a2218" stroke-width="3.5"/>
+    </svg>
+  </template>
+</body>
+</html>

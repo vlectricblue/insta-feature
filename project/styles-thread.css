@@ -1,0 +1,797 @@
+/* ─────────────────────────────────────────────────────────────
+   v3 additions: multi-card threads
+   ─ vertical card stack composer
+   ─ thread bar in Design tab + cohesion picker
+   ─ reply-chain feed renderer
+   ─ carousel + stacked variants
+   ───────────────────────────────────────────────────────────── */
+
+/* ── COMPOSER: SINGLE-CARD HINT ───────────────────────────── */
+.comp-make-thread {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 10px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #fff;
+  font-size: 12px; font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.comp-make-thread svg { width: 12px; height: 12px; color: #ffb84d; }
+.comp-make-thread:active { background: rgba(255,255,255,.14); }
+.comp-stage {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* ── COMPOSER: THREAD MODE — CARD STACK ────────────────────── */
+.composer.is-thread .comp-stage { display: none; }
+
+.card-stack {
+  position: relative;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 14px 14px 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card-stack-tools {
+  position: sticky; top: 0;
+  display: flex; justify-content: flex-end; gap: 6px;
+  padding-bottom: 4px;
+  z-index: 5;
+}
+
+/* a single card row inside the stack */
+.card-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 28px;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative;
+  align-items: stretch;
+}
+.card-row-aside {
+  display: flex; flex-direction: column; align-items: center;
+  position: relative;
+  padding-top: 6px;
+}
+.card-num {
+  font: 700 11px/1 'Space Grotesk', -apple-system, system-ui;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,.55);
+  background: rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 6px 6px;
+  white-space: nowrap;
+}
+.card-row.active .card-num { color: #fff; background: rgba(255,255,255,.18); }
+.card-cover-tag {
+  font: 800 8px/1 'Space Grotesk', -apple-system, system-ui;
+  letter-spacing: 2px;
+  color: #ffb84d;
+  margin-top: 6px;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.card-thread-line {
+  flex: 1;
+  width: 2px;
+  background: rgba(255,255,255,.1);
+  margin-top: 8px;
+  border-radius: 1px;
+}
+.card-row:last-of-type .card-thread-line { display: none; }
+.card-row.active .card-thread-line { background: rgba(255,255,255,.25); }
+
+.card-canvas-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  background: #0c0c0e;
+  border: 2px solid transparent;
+  transition: border-color .15s, transform .12s;
+}
+.card-row.active .card-canvas-wrap {
+  border-color: #fff;
+  box-shadow: 0 0 0 4px rgba(255,255,255,.04);
+}
+.card-row.is-cover .card-canvas-wrap {
+  border-color: #ffb84d;
+}
+.card-row.is-cover.active .card-canvas-wrap {
+  border-color: #ffb84d;
+  box-shadow: 0 0 0 4px rgba(255,184,77,.12);
+}
+
+.card-canvas-wrap .canvas-stage {
+  position: absolute !important;
+  left: 0; top: 0;
+  width: 320px !important;
+  height: 320px !important; /* will be overridden via aspect-ratio rule below */
+  border-radius: 0;
+  box-shadow: none;
+  transform: scale(calc(var(--card-w, 200) / 320));
+  transform-origin: top left;
+}
+.card-canvas-wrap .canvas-stage.aspect-4x5 { height: 400px !important; }
+.card-canvas-wrap .canvas-stage.aspect-9x16 { height: 569px !important; }
+.card-canvas-wrap .canvas-stage.aspect-1x1 { height: 320px !important; }
+
+/* Card row actions (right column) */
+.card-row-actions {
+  display: flex; flex-direction: column; gap: 6px;
+  padding-top: 4px;
+}
+.card-action-btn {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7);
+  transition: background .12s, color .12s;
+}
+.card-action-btn svg { width: 14px; height: 14px; }
+.card-action-btn:hover, .card-action-btn:active { background: rgba(255,255,255,.12); color: #fff; }
+.card-action-btn.active { background: rgba(255,184,77,.2); color: #ffb84d; }
+.card-action-btn.danger:hover, .card-action-btn.danger:active { background: rgba(237,73,86,.2); color: #ed4956; }
+
+/* Add new card row */
+.card-add-row { padding: 4px 0 16px; }
+.card-add-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px dashed rgba(255,255,255,.2);
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255,255,255,.7);
+  font: 600 13px/1 -apple-system, system-ui;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.card-add-btn:hover, .card-add-btn:active {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.4);
+  color: #fff;
+}
+.card-add-plus { font-size: 18px; line-height: 1; }
+.card-add-count { color: rgba(255,255,255,.45); font-weight: 500; margin-left: 4px; }
+.card-add-btn.disabled { opacity: .35; pointer-events: none; }
+
+/* ── DESIGN TAB: THREAD BAR ────────────────────────────────── */
+.d-thread-bar {
+  background: linear-gradient(95deg, rgba(185,92,246,.08), rgba(255,94,158,.06));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.d-thread-bar-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.d-thread-bar-label {
+  font: 700 10px/1 -apple-system, system-ui;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+}
+.d-thread-bar-value {
+  font: 600 13px/1 -apple-system, system-ui;
+  color: #fff;
+}
+.d-thread-bar-pickers {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.d-thread-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.7);
+  font: 700 11px/1 'Space Grotesk', -apple-system, system-ui;
+  display: inline-grid; place-items: center;
+  transition: background .12s;
+}
+.d-thread-dot:active { background: rgba(255,255,255,.14); }
+.d-thread-dot.active {
+  background: #fff;
+  color: #000;
+}
+
+/* ── COHESION PICKER ──────────────────────────────────────── */
+.d-cohesion {
+  padding: 6px 0;
+}
+.d-cohesion-label {
+  font: 700 10px/1 -apple-system, system-ui;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 8px;
+}
+.d-cohesion-row { gap: 6px; }
+.d-cohesion-chip {
+  padding: 7px 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  color: rgba(255,255,255,.7);
+  font: 600 12px/1 -apple-system, system-ui;
+}
+.d-cohesion-chip.selected {
+  background: #fff; color: #000; border-color: #fff;
+}
+
+/* ── CANVAS auto-number badge + cover header ───────────────── */
+.canvas-number {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 10;
+  font: 700 11px/1 'Space Grotesk', -apple-system, system-ui;
+  letter-spacing: 2px;
+  padding: 6px 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+  backdrop-filter: blur(4px);
+  opacity: .85;
+}
+.canvas-cover-tag {
+  position: absolute;
+  top: 18px; left: 0; right: 0;
+  z-index: 6;
+  text-align: center;
+  font: 600 10px/1 'Space Grotesk', -apple-system, system-ui;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: .75;
+  pointer-events: none;
+}
+
+/* ── ADJUST: stack canvas widths via inline css var ────────── */
+/* The card-canvas-wrap sets --card-w based on its measured width via JS;
+   we fall back to a reasonable default here. */
+.card-stack { --card-w: 200; }
+
+/* placeholder text appearance */
+.canvas-text.is-placeholder { opacity: .32; font-style: italic; }
+
+/* ── COMPOSER MODE TOGGLE (Designed / Plain) ───────────────── */
+.comp-mode-toggle {
+  display: flex; gap: 4px;
+  margin: 6px 14px 10px;
+  background: rgba(255,255,255,.05);
+  border-radius: 999px;
+  padding: 3px;
+}
+.comp-mode-toggle button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font: 600 12px/1 -apple-system, system-ui;
+  color: rgba(255,255,255,.55);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .15s, color .15s;
+}
+.comp-mode-toggle button svg { width: 14px; height: 14px; }
+.comp-mode-toggle button.active {
+  background: #fff;
+  color: #0a0a0a;
+}
+
+/* ── PLAIN-TEXT COMPOSER ───────────────────────────────────── */
+.plain-composer {
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.plain-composer-inner {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 0;
+}
+.plain-slide {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: relative;
+}
+.plain-rail {
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 2px;
+}
+.plain-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a4d, #c12a8a);
+  color: #fff;
+  font: 800 13px/1 'Space Grotesk', -apple-system, system-ui;
+  letter-spacing: .5px;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px -4px rgba(193,42,138,.5);
+}
+.plain-line {
+  width: 2px;
+  flex: 1;
+  background: rgba(255,255,255,.12);
+  margin-top: 6px;
+  min-height: 16px;
+  border-radius: 1px;
+}
+.plain-slide.active .plain-line { background: rgba(255,255,255,.22); }
+.plain-body {
+  padding-bottom: 4px;
+}
+.plain-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.plain-slide-pill {
+  font: 700 10px/1 -apple-system, system-ui;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #3897f0;
+  background: rgba(56,151,240,.12);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+.plain-slide.active .plain-slide-pill {
+  background: rgba(56,151,240,.2);
+}
+.plain-remove {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.55);
+}
+.plain-remove svg { width: 12px; height: 12px; }
+.plain-remove:active { background: rgba(237,73,86,.2); color: #ed4956; }
+.plain-user {
+  font: 600 14px/1.2 -apple-system, system-ui;
+  color: #fff;
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-bottom: 6px;
+}
+.plain-verify svg { width: 13px; height: 13px; }
+.plain-textarea {
+  width: 100%;
+  min-height: 56px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: #fff;
+  font: 400 16px/1.4 -apple-system, "SF Pro Text", system-ui;
+  resize: none;
+  padding: 0;
+  caret-color: #3897f0;
+}
+.plain-textarea::placeholder { color: rgba(255,255,255,.32); }
+.plain-counter {
+  font: 500 11px/1 'Space Grotesk', -apple-system, system-ui;
+  color: rgba(255,255,255,.4);
+  text-align: right;
+  margin-top: 4px;
+  letter-spacing: .3px;
+}
+.plain-counter.warn { color: #ffb84d; }
+.plain-counter.over { color: #ed4956; font-weight: 600; }
+
+.plain-add-slide {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 8px 0 16px;
+  color: #3897f0;
+  font: 600 14px/1 -apple-system, system-ui;
+}
+.plain-add-slide.disabled { opacity: .35; pointer-events: none; }
+.plain-add-circle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(56,151,240,.5);
+  display: grid; place-items: center;
+  color: #3897f0;
+  font-size: 22px; font-weight: 300;
+  background: transparent;
+  transition: background .15s, border-color .15s;
+}
+.plain-add-slide:active .plain-add-circle {
+  background: rgba(56,151,240,.1);
+  border-style: solid;
+}
+.plain-add-label { display: inline-flex; gap: 6px; align-items: baseline; }
+.plain-add-count { color: rgba(255,255,255,.35); font-weight: 500; font-size: 12px; }
+
+.plain-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.4);
+  backdrop-filter: blur(8px);
+}
+.plain-footer-left {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.plain-footer-main {
+  font: 600 13px/1.2 -apple-system, system-ui;
+  color: #fff;
+}
+.plain-footer-sub {
+  font: 500 11px/1 -apple-system, system-ui;
+  color: rgba(255,255,255,.5);
+}
+.plain-toggle {
+  width: 46px; height: 26px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.15);
+  position: relative;
+  transition: background .2s;
+}
+.plain-toggle.on {
+  background: #3897f0;
+}
+.plain-toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.plain-toggle.on .plain-toggle-knob {
+  transform: translateX(20px);
+}
+
+/* In plain mode, hide the tabs since the only thing to do is type. */
+.composer.is-plain .comp-tabs,
+.composer.is-plain .comp-panel { display: none; }
+.composer.is-plain .comp-stage,
+.composer.is-plain .card-stack { display: none; }
+
+/* ── PLAIN-MODE FEED RENDERING ─────────────────────────────── */
+.plain-feed-text {
+  padding: 4px 14px 12px;
+  font: 400 16px/1.45 -apple-system, "SF Pro Text", system-ui;
+  color: #fff;
+  white-space: pre-wrap;
+}
+.feed-chain-post.is-plain .chain-canvas { display: none; }
+.feed-chain-post.is-plain .plain-feed-text {
+  padding: 2px 0 8px;
+}
+
+.plain-feed-post { padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.plain-feed-post .post-head { grid-template-columns: auto 1fr auto auto !important; }
+
+.plain-bundle-post .plain-bundle-canvas {
+  background: linear-gradient(160deg, #1a1a22, #0e0e14);
+  aspect-ratio: 1/1;
+}
+.plain-bundle-slide {
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 28px;
+  background: linear-gradient(160deg, #1a1a22, #0e0e14);
+}
+.plain-bundle-text {
+  font: 500 22px/1.35 'Instrument Serif', 'Lora', serif;
+  color: #fff;
+  text-align: center;
+  white-space: pre-wrap;
+  letter-spacing: -.2px;
+}
+.plain-bundle-num {
+  position: absolute;
+  top: 14px; right: 14px;
+  font: 700 11px/1 'Space Grotesk', system-ui;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.5);
+  background: rgba(0,0,0,.4);
+  padding: 5px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+
+/* ── AI TAB: thread/single mode toggle ─────────────────────── */
+.ai-mode-toggle {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,.04);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 10px;
+}
+.ai-mode-pill {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font: 600 12px/1 -apple-system, system-ui;
+  color: rgba(255,255,255,.6);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .15s, color .15s;
+}
+.ai-mode-pill.active {
+  background: #fff; color: #000;
+}
+.ai-mode-count {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 1px;
+  background: rgba(0,0,0,.08);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+.ai-mode-pill.active .ai-mode-count {
+  background: rgba(0,0,0,.18);
+  color: #000;
+}
+
+.ai-thread-preview {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255,255,255,.1);
+}
+.ai-thread-preview-label {
+  font: 700 10px/1 -apple-system, system-ui;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,184,77,.85);
+  margin-bottom: 6px;
+}
+.ai-thread-preview-list {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ai-thread-chip {
+  font: 500 11px/1.3 -apple-system, system-ui;
+  color: rgba(255,255,255,.7);
+  padding: 4px 8px;
+  background: rgba(255,255,255,.03);
+  border-radius: 6px;
+  border-left: 2px solid rgba(255,184,77,.4);
+}
+
+/* ── SHARE: thread strip ───────────────────────────────────── */
+.share-thread-strip {
+  display: flex; gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  flex: 1;
+  max-width: 100%;
+}
+.share-thread-card-wrap {
+  flex: 0 0 64px;
+  position: relative;
+}
+.share-thread-num {
+  position: absolute;
+  top: -4px; left: -4px;
+  z-index: 5;
+  background: #fff; color: #000;
+  font: 800 9px/1 'Space Grotesk', system-ui;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: inline-grid; place-items: center;
+  border: 2px solid #000;
+}
+.share-thread-card-wrap .share-preview {
+  width: 64px;
+  aspect-ratio: 4/5;
+}
+.share-thread-card-wrap .share-preview .canvas-stage {
+  transform: scale(calc(64 / 320));
+}
+
+/* feed style picker in share */
+.share-feedstyle {
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.share-feedstyle-label {
+  font: 700 10px/1 -apple-system, system-ui;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 10px;
+}
+.share-feedstyle-options {
+  display: grid; gap: 6px;
+}
+.share-feedstyle-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  color: #fff;
+  text-align: left;
+  transition: background .15s, border-color .15s;
+}
+.share-feedstyle-opt:active { background: rgba(255,255,255,.08); }
+.share-feedstyle-opt.selected {
+  background: rgba(255,255,255,.06);
+  border-color: #fff;
+}
+.share-feedstyle-icon {
+  width: 32px; height: 36px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  position: relative;
+}
+.share-feedstyle-icon.icon-chain {
+  background: linear-gradient(180deg, #4a4a52 0%, #4a4a52 30%, transparent 30%, transparent 35%, #4a4a52 35%, #4a4a52 65%, transparent 65%, transparent 70%, #4a4a52 70%, #4a4a52 100%);
+}
+.share-feedstyle-icon.icon-carousel {
+  background: #4a4a52;
+}
+.share-feedstyle-icon.icon-carousel::after {
+  content: ""; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+  width: 8px; height: 30px; border-radius: 4px;
+  background: rgba(74,74,82,.5);
+}
+.share-feedstyle-icon.icon-stack {
+  background: #4a4a52;
+  box-shadow: 3px 3px 0 -1px rgba(74,74,82,.6), 6px 6px 0 -2px rgba(74,74,82,.4);
+}
+.share-feedstyle-opt.selected .share-feedstyle-icon { background-color: #ffb84d; }
+.share-feedstyle-opt.selected .share-feedstyle-icon.icon-chain {
+  background: linear-gradient(180deg, #ffb84d 0%, #ffb84d 30%, transparent 30%, transparent 35%, #ffb84d 35%, #ffb84d 65%, transparent 65%, transparent 70%, #ffb84d 70%, #ffb84d 100%);
+}
+.share-feedstyle-name { font-size: 14px; font-weight: 600; }
+.share-feedstyle-sub { font-size: 11px; color: rgba(255,255,255,.5); }
+
+/* ── FEED: REPLY CHAIN ─────────────────────────────────────── */
+.feed-chain-post {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 8px;
+  padding: 0 12px 4px;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.feed-chain-post + .feed-chain-post .chain-rail .chain-avatar {
+  margin-top: -8px;
+}
+.feed-chain-post .chain-rail {
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 14px;
+}
+.chain-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background-size: cover; background-position: center;
+  flex-shrink: 0;
+  border: 2px solid #000;
+}
+.chain-line {
+  width: 2px;
+  flex: 1;
+  background: rgba(255,255,255,.15);
+  margin-top: 6px;
+  min-height: 24px;
+}
+.chain-body { padding-top: 12px; }
+.chain-head { padding: 0 0 6px !important; grid-template-columns: 1fr auto !important; }
+.chain-reply-to {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px; font-weight: 500;
+  color: rgba(255,255,255,.5);
+}
+.chain-reply-to strong { color: rgba(255,255,255,.7); font-weight: 600; }
+.chain-canvas { border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.06); }
+.chain-actions { padding: 6px 0 2px !important; }
+.chain-actions .btn-icon svg { width: 20px; height: 20px; }
+.chain-likes { padding: 0 0 2px !important; font-size: 13px !important; }
+.chain-time { padding: 2px 0 0 !important; font-size: 11px !important; }
+.chain-caption { padding: 0 0 8px !important; font-size: 13px !important; line-height: 1.4 !important; color: rgba(255,255,255,.85); }
+
+/* ── FEED: CAROUSEL ────────────────────────────────────────── */
+.feed-carousel-post .carousel-canvas {
+  position: relative;
+}
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  position: relative;
+  aspect-ratio: var(--post-aspect, 4/5);
+  overflow: hidden;
+}
+.carousel-slide .canvas-stage {
+  position: absolute !important;
+  left: 0; top: 0;
+  width: 320px !important; height: auto !important;
+  border-radius: 0;
+  transform: scale(calc(var(--post-w, 375) / 320));
+  transform-origin: top left;
+}
+.carousel-count {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 5;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  font: 600 11px/1 -apple-system, system-ui;
+  padding: 4px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+.carousel-dots {
+  display: flex; justify-content: center; gap: 4px;
+  padding: 8px 0 4px;
+}
+.carousel-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  transition: background .15s, transform .15s;
+}
+.carousel-dot.active { background: #3897f0; transform: scale(1.2); }
+
+/* ── FEED: STACKED (peek strip below main card) ───────────── */
+.stacked-peek {
+  padding: 10px 14px 4px;
+  display: flex; flex-direction: column;
+  gap: 8px;
+}
+.stacked-peek-label {
+  font: 700 11px/1 -apple-system, system-ui;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(255,184,77,.85);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.stacked-peek-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #ffb84d;
+  box-shadow: 0 0 8px #ffb84d;
+}
+.stacked-peek-thumbs {
+  display: flex; gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.stacked-peek-thumb {
+  flex: 0 0 100px;
+  aspect-ratio: 4/5;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.stacked-peek-thumb .canvas-stage {
+  position: absolute !important;
+  left: 0; top: 0;
+  width: 320px !important; height: auto !important;
+  border-radius: 0;
+  transform: scale(calc(100 / 320));
+  transform-origin: top left;
+}
+.stacked-peek-cta {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,184,77,.12);
+  border: 1px solid rgba(255,184,77,.35);
+  color: #ffb84d;
+  font: 600 12px/1 -apple-system, system-ui;
+  white-space: nowrap;
+}
+.stacked-peek-cta:active { background: rgba(255,184,77,.2); }
+
+/* threads badge on chain / carousel / stacked */
+.feed-carousel-post .threads-badge,
+.feed-stacked-post .threads-badge { margin-left: 4px; }
+
