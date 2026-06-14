@@ -55,17 +55,22 @@ python3 -m http.server 8000
 # open http://127.0.0.1:8000/index.html
 ```
 
-## Demo video
+## Demo carousel (PDF)
 
-A scripted, vertical (390×844) product walkthrough lives at
-`demo-output/demo.webm`. Re-record it with:
+A 9-slide product carousel — one feature per page — lives at
+**`Instagram-Post-Design-Studio.pdf`**. Rebuild it with:
 
 ```bash
 npm install
 npx playwright install chromium
-# serve the prototype, then:
-node record-demo.js          # outputs demo-output/demo.webm
+# serve the prototype on :8000, then:
+node capture-carousel.js     # crisp 3x phone frames → carousel-frames/
+node build-pdf.js            # assembles → Instagram-Post-Design-Studio.pdf
 ```
 
-The recorder (`record-demo.js`) drives every feature at a paced,
-product-video cadence against a local server (`DEMO_URL` overrides the target).
+`capture-carousel.js` drives the prototype to each feature state and
+screenshots the phone at retina resolution; `build-pdf.js` lays those frames
+onto clean dark pages with titles, captions, and progress dots.
+
+A scripted vertical screen recording is also available via
+`node record-demo.js` (outputs a `.webm`).

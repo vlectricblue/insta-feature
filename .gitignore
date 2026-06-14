@@ -1,5 +1,5 @@
 node_modules/
-demo-output/*.webm
-!demo-output/demo.webm
+demo-output/
+carousel-frames/
 .DS_Store
 ~/
