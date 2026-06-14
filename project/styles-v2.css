@@ -183,6 +183,37 @@
 }
 .d-photo-chip.selected { box-shadow: 0 0 0 2px #fff; }
 
+/* Upload chip — dashed placeholder, then shows thumbnail after upload */
+.d-photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #444;
+  cursor: pointer;
+  gap: 3px;
+  transition: border-color .2s, background .2s;
+  background-size: cover;
+  background-position: center;
+}
+.d-photo-upload:hover { border-color: #888; background-color: #222; }
+.d-photo-upload.has-image { border-style: solid; border-color: #fff5; }
+.d-photo-upload .d-photo-upload-plus {
+  font-size: 20px;
+  line-height: 1;
+  color: #888;
+  transition: color .2s;
+}
+.d-photo-upload:hover .d-photo-upload-plus { color: #fff; }
+.d-photo-upload.has-image .d-photo-upload-plus,
+.d-photo-upload.has-image .d-photo-upload-label { display: none; }
+.d-photo-upload-label {
+  font-size: 9px;
+  color: #666;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
 /* ── STICKER PICKER ────────────────────────────────────────── */
 .d-sticker-row {
   display: grid;

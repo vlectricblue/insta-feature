@@ -1,0 +1,5 @@
+node_modules/
+demo-output/*.webm
+!demo-output/demo.webm
+.DS_Store
+~/

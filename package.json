@@ -1,0 +1,24 @@
+{
+  "name": "insta-feature",
+  "version": "1.0.0",
+  "description": "This is a **handoff bundle** from Claude Design (claude.ai/design).",
+  "main": "record-demo.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vlectricblue/insta-feature.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vlectricblue/insta-feature/issues"
+  },
+  "homepage": "https://github.com/vlectricblue/insta-feature#readme",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}

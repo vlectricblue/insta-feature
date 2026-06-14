@@ -458,6 +458,44 @@ function render() {
   attachCarouselHandlers();
   attachSwipeGestures();
   fitScaledCanvases();
+  fitCanvasText();
+}
+
+/* Auto-shrink canvas text so it never overflows its fixed-aspect stage.
+   Scales font-size down (never up past the chosen size) until the text
+   fits within the padded inner area. Runs after every render.
+   Skips the editable composer canvas so the user keeps their chosen size
+   while typing/positioning — only the rendered outputs (carousel slides,
+   feed, share previews, thumbnails) get auto-fit. */
+function fitCanvasText() {
+  $$(".canvas-text").forEach(txt => {
+    // Don't shrink the live editing canvas — let the user drive size there.
+    if (txt.hasAttribute("contenteditable")) return;
+    const inner = txt.closest(".canvas-inner");
+    const stage = txt.closest(".canvas-stage");
+    if (!inner || !stage) return;
+    // The available height is the inner box minus its vertical padding.
+    const cs = getComputedStyle(inner);
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const availH = inner.clientHeight - padY;
+    const availW = inner.clientWidth - padX;
+    if (availH <= 0 || availW <= 0) return;
+
+    // Start from the recipe's font-size (read from the CSS var on the stage).
+    const baseSize = parseFloat(getComputedStyle(stage).getPropertyValue("--c-size")) ||
+                     parseFloat(getComputedStyle(txt).fontSize) || 36;
+    let size = baseSize;
+    txt.style.fontSize = size + "px";
+
+    // Shrink until it fits (cap iterations for safety).
+    let guard = 0;
+    while ((txt.scrollHeight > availH || txt.scrollWidth > availW) && size > 10 && guard < 60) {
+      size -= 1;
+      txt.style.fontSize = size + "px";
+      guard++;
+    }
+  });
 }
 
 /* Swipe-right gesture on home → opens the camera/create flow.
@@ -1500,8 +1538,35 @@ on("click", "[data-set-cohesion]", (e, t) => {
 
 on("click", "[data-set-bg-image]", (e, t) => {
   state.overrides.bgImage = t.dataset.setBgImage;
-  state.overrides.bgImageDim = state.overrides.bgImageDim || 0.35;
+  state.overrides.bgImageOpacity = 0.75;
+  state.overrides.bgImageDim = state.overrides.bgImageDim || 0;
   pushHistory(); render();
+});
+
+/* Upload your own photo as background */
+document.addEventListener("change", (e) => {
+  const input = e.target.closest("[data-upload-bg]");
+  if (!input || !input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (!file.type.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    state.overrides.bgImage = dataUrl;
+    state.overrides.bgImageOpacity = 0.75;
+    state.overrides.bgImageDim = 0;
+    pushHistory();
+    render();
+    // Show thumbnail on the upload chip (persists until next render)
+    const chip = document.querySelector(".d-photo-upload");
+    if (chip) {
+      chip.style.backgroundImage = `url('${dataUrl}')`;
+      chip.classList.add("has-image");
+    }
+  };
+  reader.readAsDataURL(file);
+  // reset so the same file can be re-picked
+  input.value = "";
 });
 on("click", "[data-add-sticker]", (e, t) => {
   addSticker(t.dataset.addSticker);
@@ -1587,6 +1652,8 @@ on("input", "[data-set]", (e, t) => {
     const show = $(`[data-show="lh"]`); if (show) show.textContent = val.toFixed(2);
   } else if (key === "bgImageDim") {
     const show = $(`[data-show="dim"]`); if (show) show.textContent = Math.round(val * 100) + "%";
+  } else if (key === "bgImageOpacity") {
+    const show = $(`[data-show="op"]`); if (show) show.textContent = Math.round(val * 100) + "%";
   }
   // live update canvas
   const c = $(".comp-stage .canvas-stage");
@@ -1594,9 +1661,12 @@ on("input", "[data-set]", (e, t) => {
     if (key === "fontSize") c.style.setProperty("--c-size", val + "px");
     if (key === "lineHeight") c.style.setProperty("--c-lh", val);
     if (key === "bgImageDim") {
-      // re-render canvas overlay only
       const overlay = c.querySelector(".canvas-bg-image + .canvas-overlay");
       if (overlay) overlay.style.background = `rgba(0,0,0,${val})`;
+    }
+    if (key === "bgImageOpacity") {
+      const bgImg = c.querySelector(".canvas-bg-image");
+      if (bgImg) bgImg.style.opacity = val;
     }
   }
   clearTimeout(t.__d); t.__d = setTimeout(pushHistory, 400);

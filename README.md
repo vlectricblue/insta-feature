@@ -20,3 +20,52 @@ The design medium is **HTML/CSS/JS** — these are prototypes, not production co
 
 - `insta-feature/README.md` — this file
 - `insta-feature/project/` — the `Insta Feature` project files (HTML prototypes, assets, components)
+
+---
+
+# Instagram — Post Design Studio (prototype)
+
+An in-app post & carousel creator for Instagram: templates, typography, photo
+backgrounds, stickers, AI-assisted design directions, multi-slide carousels, a
+live feed preview, and a share flow. Vanilla HTML/CSS/JS — open
+`project/index.html` to run it.
+
+## Features
+
+- **Templates** — curated row + full categorized browser.
+- **Typography** — fonts, size, line-height, color, alignment.
+- **Backgrounds** — solid & gradient swatches, plus **photo backgrounds**:
+  - Pick a preset photo **or upload your own** (📎 Upload chip).
+  - Background images default to **75% opacity** so overlaid text stays readable;
+    adjustable opacity + "darken photo" controls.
+- **Stickers** — animated SVG stickers, drag to position.
+- **AI directions** — paste text, get 6 designed directions; **Carousel mode**
+  auto-splits longer text into designed slides.
+- **Carousels** — multi-slide card stack with brand-kit cohesion, numbering, cover.
+- **Auto-fit text** — canvas text auto-shrinks to fit its frame, so slides never
+  overflow.
+- **Feed preview & share** — see the post live in a feed, swipe the carousel, add
+  a caption, and post.
+
+## Run it
+
+```bash
+# from project/
+python3 -m http.server 8000
+# open http://127.0.0.1:8000/index.html
+```
+
+## Demo video
+
+A scripted, vertical (390×844) product walkthrough lives at
+`demo-output/demo.webm`. Re-record it with:
+
+```bash
+npm install
+npx playwright install chromium
+# serve the prototype, then:
+node record-demo.js          # outputs demo-output/demo.webm
+```
+
+The recorder (`record-demo.js`) drives every feature at a paced,
+product-video cadence against a local server (`DEMO_URL` overrides the target).
